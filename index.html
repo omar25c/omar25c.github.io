@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INDEX — Portfolio</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#000; --line:#2a2a2a; --line-bright:#555;
+    --ink:#eaeaea; --ink-dim:#888; --ink-faint:#4a4a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Mono','JetBrains Mono',ui-monospace,Consolas,monospace;
+    font-size:13px; line-height:1.6;
+  }
+  ::selection{background:#fff;color:#000;}
+  a{color:inherit;}
+  :focus-visible{outline:1px solid #fff; outline-offset:2px;}
+
+  .frame{max-width:1320px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);min-height:100vh;}
+
+  /* HEADER */
+  header{
+    position:sticky; top:0; z-index:10; background:var(--bg);
+    border-bottom:1px solid var(--line-bright);
+    padding:22px 32px; display:flex; justify-content:space-between; align-items:center;
+  }
+  header .title{font-size:16px; font-weight:700; letter-spacing:0.02em;}
+  header .title span{color:var(--ink-dim); font-weight:400;}
+  nav{display:flex; gap:28px; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;}
+  nav a{text-decoration:none; color:var(--ink-dim); border-bottom:1px solid transparent; padding-bottom:2px;}
+  nav a:hover{color:var(--ink); border-color:var(--ink);}
+  .meta{font-size:10px; color:var(--ink-dim); text-align:right; line-height:1.5;}
+
+  .subbar{
+    display:flex; justify-content:space-between; padding:8px 32px;
+    border-bottom:1px solid var(--line); font-size:10px; letter-spacing:0.08em;
+    color:var(--ink-faint); text-transform:uppercase;
+  }
+
+  section{border-bottom:1px solid var(--line); padding:64px 32px;}
+  .sec-label{
+    font-size:10px; letter-spacing:0.12em; color:var(--ink-dim); text-transform:uppercase;
+    margin-bottom:28px; display:flex; justify-content:space-between;
+  }
+  .sec-label .idx{color:var(--ink-faint);}
+
+  /* HERO */
+  .hero{padding:96px 32px 80px;}
+  .hero h1{
+    font-size:clamp(40px,7vw,84px); font-weight:700; letter-spacing:-0.01em; line-height:1.02;
+    max-width:920px;
+  }
+  .hero h1 .dim{color:var(--ink-faint);}
+  .hero .role{margin-top:22px; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-dim);}
+  .hero .statement{margin-top:26px; max-width:560px; color:var(--ink-dim); font-size:14px; line-height:1.7;}
+  .hero .coords{margin-top:48px; display:flex; gap:40px; flex-wrap:wrap;}
+  .coord .k{font-size:9px; letter-spacing:0.1em; color:var(--ink-faint); text-transform:uppercase; margin-bottom:4px;}
+  .coord .v{font-size:13px;}
+
+  /* PROJECTS */
+  .proj-row{
+    border-top:1px solid var(--line); display:grid; grid-template-columns:60px 1fr 160px 24px;
+    align-items:center; padding:22px 0; cursor:pointer; gap:16px;
+  }
+  .projects .proj-row:last-child{border-bottom:1px solid var(--line);}
+  .proj-idx{font-size:11px; color:var(--ink-faint);}
+  .proj-name{font-size:20px; font-weight:600; letter-spacing:-0.01em;}
+  .proj-tags{font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-dim); text-align:right;}
+  .proj-arrow{font-size:14px; color:var(--ink-faint); transition:transform .2s;}
+  .proj-row:hover .proj-arrow{transform:translateX(3px); color:var(--ink);}
+  .proj-row:hover .proj-name{color:#fff;}
+  .proj-detail{
+    max-height:0; overflow:hidden; transition:max-height .25s ease; grid-column:1/-1;
+  }
+  .proj-row.open .proj-detail{max-height:220px;}
+  .proj-detail-inner{padding:18px 0 6px 60px; display:grid; grid-template-columns:1fr 200px; gap:24px;}
+  .proj-detail p{color:var(--ink-dim); font-size:12.5px; max-width:520px; line-height:1.7;}
+  .proj-stack{font-size:10px; letter-spacing:0.06em; color:var(--ink-faint); text-transform:uppercase; line-height:2;}
+  .proj-link{display:inline-block; margin-top:12px; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; border-bottom:1px solid var(--ink-bright,var(--ink)); padding-bottom:2px;}
+
+  /* ABOUT */
+  .about-grid{display:grid; grid-template-columns:1fr 1fr; gap:48px;}
+  @media (max-width:800px){ .about-grid{grid-template-columns:1fr;} }
+  .about-grid p{color:var(--ink-dim); font-size:13.5px; line-height:1.8; margin-bottom:16px;}
+  .skills-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;}
+  .skill-chip{border:1px solid var(--line-bright); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; padding:6px 10px;}
+
+  /* CONTACT */
+  .contact h2{font-size:clamp(30px,5vw,52px); font-weight:700; max-width:680px; line-height:1.15;}
+  .contact-links{margin-top:36px; display:flex; flex-direction:column; gap:2px; max-width:520px;}
+  .contact-link{
+    display:flex; justify-content:space-between; align-items:center; padding:16px 0;
+    border-top:1px solid var(--line); text-decoration:none; font-size:14px;
+  }
+  .contact-links .contact-link:last-child{border-bottom:1px solid var(--line);}
+  .contact-link .arrow{color:var(--ink-faint);}
+  .contact-link:hover{color:#fff;}
+  .contact-link:hover .arrow{color:#fff; transform:translateX(3px);}
+  .contact-link .arrow{transition:transform .15s;}
+
+  footer{display:flex; justify-content:space-between; padding:20px 32px; font-size:10px; color:var(--ink-faint); letter-spacing:0.05em; text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header>
+    <div class="title">INDEX<span>.PORTFOLIO</span></div>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+  <div class="subbar">
+    <span>PERSONAL SITE — SELECTED WORK</span>
+    <span id="clock">—</span>
+  </div>
+
+  <section class="hero">
+    <h1>Your Name<span class="dim">.</span><br>Building things<span class="dim">,</span> shipping often<span class="dim">.</span></h1>
+    <div class="role">Role / Discipline — e.g. Software Engineer</div>
+    <div class="statement">A short statement about what you do and how you think about your work. Two or three sentences, written plainly.</div>
+    <div class="coords">
+      <div class="coord"><div class="k">Based in</div><div class="v">City, Country</div></div>
+      <div class="coord"><div class="k">Status</div><div class="v">Open to work</div></div>
+      <div class="coord"><div class="k">Focus</div><div class="v">Area of interest</div></div>
+    </div>
+  </section>
+
+  <section id="work" class="projects">
+    <div class="sec-label"><span>01 — Selected Work</span><span class="idx" id="proj-count">—</span></div>
+
+    <div class="proj-row" onclick="this.classList.toggle('open')">
+      <div class="proj-idx">01</div>
+      <div class="proj-name">EV Fleet Leasing Model</div>
+      <div class="proj-tags">Financial Model</div>
+      <div class="proj-arrow">→</div>
+      <div class="proj-detail"><div class="proj-detail-inner">
+        <p>Third-party-owned EV fleet leasing model. Set fleet size, lease terms, financing, tax and risk assumptions to see after-tax equity IRR, unlevered IRR, NPV at hurdle rate, breakeven and total capex.</p>
+        <div>
+          <div class="proj-stack">HTML · JAVASCRIPT</div>
+          <a class="proj-link" href="projects/ev-lease-model.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">OPEN LIVE →</a>
+        </div>
+      </div></div>
+    </div>
+    <div class="proj-row" onclick="this.classList.toggle('open')">
+      <div class="proj-idx">02</div>
+      <div class="proj-name">Monte Carlo Investment Simulator</div>
+      <div class="proj-tags">Simulation</div>
+      <div class="proj-arrow">→</div>
+      <div class="proj-detail"><div class="proj-detail-inner">
+        <p>Stochastic projection engine. Runs thousands of simulated return paths from a mean return and volatility, then reports expected final value, probability of loss, probability of beating a benchmark, and 5th and 95th percentile outcomes.</p>
+        <div>
+          <div class="proj-stack">HTML · JAVASCRIPT · CHART.JS</div>
+          <a class="proj-link" href="projects/investment-simulator.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">OPEN LIVE →</a>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="sec-label"><span>02 — About</span><span class="idx">Background</span></div>
+    <div class="about-grid">
+      <div>
+        <p>Write a few paragraphs here about your background, how you got into this work, and what drives you. Keep it plain and specific rather than promotional.</p>
+        <p>A second paragraph can cover what you're currently focused on, or the kind of work you're looking for next.</p>
+      </div>
+      <div>
+        <div class="proj-idx" style="margin-bottom:10px;">TOOLS / STACK</div>
+        <div class="skills-list">
+          <div class="skill-chip">TypeScript</div>
+          <div class="skill-chip">Python</div>
+          <div class="skill-chip">React</div>
+          <div class="skill-chip">Figma</div>
+          <div class="skill-chip">SQL</div>
+          <div class="skill-chip">AWS</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <div class="sec-label"><span>03 — Contact</span><span class="idx" id="date-idx">—</span></div>
+    <h2>Have a project in mind, or just want to talk shop? Reach out.</h2>
+    <div class="contact-links">
+      <a class="contact-link" href="mailto:you@example.com"><span>Email</span><span class="arrow">you@example.com →</span></a>
+      <a class="contact-link" href="#"><span>GitHub</span><span class="arrow">@yourhandle →</span></a>
+      <a class="contact-link" href="#"><span>LinkedIn</span><span class="arrow">/in/yourhandle →</span></a>
+    </div>
+  </section>
+
+  <footer>
+    <span>© <span id="year"></span> Your Name</span>
+    <span>Built with plain HTML/CSS</span>
+  </footer>
+</div>
+
+<script>
+  function tick(){
+    const d = new Date();
+    document.getElementById('clock').innerText = d.toISOString().slice(0,19).replace('T',' ') + ' UTC';
+  }
+  tick(); setInterval(tick, 1000);
+  document.getElementById('year').innerText = new Date().getFullYear();
+  document.getElementById('proj-count').innerText = document.querySelectorAll('.proj-row').length + ' ENTRIES';
+  document.getElementById('date-idx').innerText = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
