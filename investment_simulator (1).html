@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONTE CARLO // INVESTMENT SIMULATOR</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #000000;
+    --white: #ffffff;
+    --gray: #888888;
+    --light: #e8e8e8;
+    --border: 2px solid #000;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    border-bottom: 4px solid var(--black);
+    padding: 24px 40px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 5vw, 64px);
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+
+  header span {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 97px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: var(--border);
+    padding: 0;
+  }
+
+  .sidebar-section {
+    border-bottom: var(--border);
+    padding: 24px;
+  }
+
+  .sidebar-section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .input-group {
+    margin-bottom: 18px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--black);
+  }
+
+  .input-group input[type="number"],
+  .input-group input[type="range"] {
+    width: 100%;
+  }
+
+  .input-group input[type="number"] {
+    background: var(--white);
+    border: var(--border);
+    color: var(--black);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .input-group input[type="number"]::-webkit-inner-spin-button,
+  .input-group input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .input-group input[type="number"]:focus {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  .input-group input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    background: var(--black);
+    outline: none;
+    margin-top: 8px;
+  }
+
+  .input-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--black);
+    cursor: pointer;
+  }
+
+  .range-display {
+    font-size: 20px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .run-btn {
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 4px;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .run-btn:hover {
+    background: var(--white);
+    color: var(--black);
+    outline: var(--border);
+  }
+
+  .run-btn:active { opacity: 0.7; }
+
+  /* MAIN */
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metrics-bar {
+    border-bottom: var(--border);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .metric {
+    padding: 20px 24px;
+    border-right: var(--border);
+  }
+
+  .metric:last-child { border-right: none; }
+
+  .metric-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .metric-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    display: block;
+  }
+
+  .metric-value.positive { color: #000; }
+  .metric-value.negative { color: #000; text-decoration: line-through; }
+
+  .charts-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1;
+  }
+
+  .chart-panel {
+    padding: 28px;
+    border-right: var(--border);
+    border-bottom: var(--border);
+    position: relative;
+  }
+
+  .chart-panel:nth-child(2) { border-right: none; }
+  .chart-panel:nth-child(3) { border-bottom: none; }
+  .chart-panel:nth-child(4) { border-right: none; border-bottom: none; }
+
+  .chart-title {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  canvas { max-width: 100%; }
+
+  .percentile-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  .percentile-table th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    border-bottom: var(--border);
+    padding: 8px 0;
+  }
+
+  .percentile-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--light);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .percentile-table tr:last-child td { border-bottom: none; }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .bar-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 2px;
+    background: var(--light);
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--black);
+    transition: width 0.6s ease;
+  }
+
+  .bar-val {
+    font-size: 11px;
+    width: 80px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .status-line {
+    padding: 8px 40px;
+    border-top: var(--border);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gray);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .idle-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--light);
+    grid-column: 1 / -1;
+    padding: 80px;
+    text-align: center;
+    border-bottom: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MONTE CARLO // INVESTMENT SIMULATOR</h1>
+  <span>Stochastic Projection Engine v1.0</span>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <span class="section-label">Capital Parameters</span>
+
+      <div class="input-group">
+        <label>Initial Investment</label>
+        <input type="number" id="initInv" value="1000000" step="10000">
+      </div>
+
+      <div class="input-group">
+        <label>Benchmark / Target Return</label>
+        <input type="number" id="benchmark" value="1200000" step="10000">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="section-label">Growth Assumptions</span>
+
+      <div class="input-group">
+        <label>Mean Annual Return (%)</label>
+        <span class="range-display" id="meanDisplay">5.0%</span>
+        <input type="range" id="meanReturn" min="-20" max="50" step="0.5" value="5">
+      </div>
+
+      <div class="input-group">
+        <label>Volatility / Risk (Std Dev %)</label>
+        <span class="range-display" id="stdDisplay">3.0%</span>
+        <input type="range" id="stdReturn" min="0.5" max="40" step="0.5" value="3">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="section-label">Simulation Settings</span>
+
+      <div class="input-group">
+        <label>Time Horizon (Years)</label>
+        <span class="range-display" id="yearsDisplay">5</span>
+        <input type="range" id="years" min="1" max="20" step="1" value="5">
+      </div>
+
+      <div class="input-group">
+        <label>Number of Simulations</label>
+        <span class="range-display" id="simsDisplay">10,000</span>
+        <input type="range" id="nSims" min="1000" max="50000" step="1000" value="10000">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="run-btn" onclick="runSimulation()">RUN SIMULATION</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="metrics-bar">
+      <div class="metric">
+        <span class="metric-label">Expected Final Value</span>
+        <span class="metric-value" id="m-expected">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">P(Loss)</span>
+        <span class="metric-value" id="m-ploss">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">P(Beat Benchmark)</span>
+        <span class="metric-value" id="m-pbench">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Worst Case (5th %ile)</span>
+        <span class="metric-value" id="m-worst">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Best Case (95th %ile)</span>
+        <span class="metric-value" id="m-best">—</span>
+      </div>
+    </div>
+
+    <div class="charts-area" id="chartsArea">
+      <div class="idle-state">
+        CONFIGURE PARAMETERS AND RUN SIMULATION
+      </div>
+    </div>
+
+    <div class="status-line">
+      <span id="status-left">AWAITING INPUT</span>
+      <span id="status-right">MONTE CARLO // STOCHASTIC PROJECTION</span>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  // Sliders
+  const sliders = [
+    { id: 'meanReturn', display: 'meanDisplay', fmt: v => `${parseFloat(v).toFixed(1)}%` },
+    { id: 'stdReturn',  display: 'stdDisplay',  fmt: v => `${parseFloat(v).toFixed(1)}%` },
+    { id: 'years',      display: 'yearsDisplay', fmt: v => `${v}` },
+    { id: 'nSims',      display: 'simsDisplay',  fmt: v => parseInt(v).toLocaleString() },
+  ];
+  sliders.forEach(({ id, display, fmt }) => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { document.getElementById(display).textContent = fmt(el.value); });
+  });
+
+  let lineChart = null, histChart = null;
+
+  function fmt(n) {
+    if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return n.toFixed(0);
+  }
+
+  function pct(n) { return (n * 100).toFixed(1) + '%'; }
+
+  // Expects an array already sorted ascending (sorted once, reused many times)
+  function percentileSorted(sorted, p) {
+    const idx = Math.floor((p / 100) * sorted.length);
+    return sorted[Math.min(idx, sorted.length - 1)];
+  }
+
+  function runSimulation() {
+    const initInv   = parseFloat(document.getElementById('initInv').value);
+    const benchmark = parseFloat(document.getElementById('benchmark').value);
+    const mean      = parseFloat(document.getElementById('meanReturn').value) / 100;
+    const std       = parseFloat(document.getElementById('stdReturn').value) / 100;
+    const years     = parseInt(document.getElementById('years').value);
+    const nSims     = parseInt(document.getElementById('nSims').value);
+
+    if (!isFinite(initInv) || initInv <= 0 || !isFinite(benchmark) || benchmark < 0) {
+      document.getElementById('status-left').textContent = 'INVALID INPUT: INITIAL INVESTMENT MUST BE > 0, BENCHMARK >= 0';
+      return;
+    }
+
+    document.getElementById('status-left').textContent = 'COMPUTING...';
+
+    setTimeout(() => {
+      // Monte Carlo
+      const results = new Array(nSims);
+      const yearlyMeans = new Array(years).fill(0);
+      const p5s = [], p95s = [];
+
+      const allByYear = Array.from({ length: years }, () => []);
+
+      for (let i = 0; i < nSims; i++) {
+        let val = initInv;
+        const path = [];
+        for (let t = 0; t < years; t++) {
+          const u1 = 1 - Math.random(), u2 = Math.random();  // u1 in (0, 1], avoids log(0)
+          const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          val *= Math.max(0, 1 + mean + std * z);  // no negative wealth
+          path.push(val);
+          allByYear[t].push(val);
+        }
+        results[i] = val;
+        for (let t = 0; t < years; t++) yearlyMeans[t] += path[t];
+      }
+
+      for (let t = 0; t < years; t++) {
+        yearlyMeans[t] /= nSims;
+        allByYear[t].sort((a, b) => a - b);  // sort once per year
+        p5s.push(percentileSorted(allByYear[t], 5));
+        p95s.push(percentileSorted(allByYear[t], 95));
+      }
+
+      const finalVals = [...results].sort((a, b) => a - b);  // sorted once, reused below
+      const expected  = yearlyMeans[years - 1];
+      const pLoss     = finalVals.filter(v => v < initInv).length / nSims;
+      const pBench    = finalVals.filter(v => v > benchmark).length / nSims;
+      const worst     = percentileSorted(finalVals, 5);
+      const best      = percentileSorted(finalVals, 95);
+
+      // Update metrics
+      document.getElementById('m-expected').textContent = fmt(expected);
+      document.getElementById('m-ploss').textContent = pct(pLoss);
+      document.getElementById('m-pbench').textContent = pct(pBench);
+      document.getElementById('m-worst').textContent = fmt(worst);
+      document.getElementById('m-best').textContent = fmt(best);
+
+      // Destroy old Chart.js instances before their canvases are replaced
+      if (lineChart) { lineChart.destroy(); lineChart = null; }
+      if (histChart) { histChart.destroy(); histChart = null; }
+
+      // Rebuild charts area
+      document.getElementById('chartsArea').innerHTML = `
+        <div class="chart-panel">
+          <span class="chart-title">Projected Value Over Time — Mean + Confidence Bands</span>
+          <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-panel">
+          <span class="chart-title">Final Value Distribution (P1 to P99, tails clamped into end bins)</span>
+          <canvas id="histChart"></canvas>
+        </div>
+        <div class="chart-panel">
+          <span class="chart-title">Percentile Breakdown at Final Year</span>
+          <div id="percTable"></div>
+        </div>
+        <div class="chart-panel">
+          <span class="chart-title">Risk / Return Profile</span>
+          <div id="riskBars"></div>
+        </div>
+      `;
+
+      const labels = Array.from({ length: years }, (_, i) => `Y${i + 1}`);
+
+      // Line chart
+      lineChart = new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Mean', data: yearlyMeans, borderColor: '#000', borderWidth: 2, pointRadius: 3, fill: false, tension: 0.3 },
+            { label: '5th–95th %ile', data: p95s, borderColor: '#aaa', borderWidth: 1, borderDash: [4,4], pointRadius: 0, fill: '+1', backgroundColor: 'rgba(0,0,0,0.05)', tension: 0.3 },
+            { label: '', data: p5s, borderColor: '#aaa', borderWidth: 1, borderDash: [4,4], pointRadius: 0, fill: false, tension: 0.3 },
+            { label: 'Benchmark', data: Array(years).fill(benchmark), borderColor: '#555', borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false },
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#e8e8e8' }, ticks: { font: { family: 'Space Mono', size: 10 } } },
+            y: { grid: { color: '#e8e8e8' }, ticks: { font: { family: 'Space Mono', size: 10 }, callback: v => fmt(v) } }
+          }
+        }
+      });
+
+      // Histogram
+      const bins = 40;
+      const minV = percentileSorted(finalVals, 1), maxV = percentileSorted(finalVals, 99);
+      const binW = (maxV - minV) / bins || 1;  // guard against zero width
+      const counts = new Array(bins).fill(0);
+      finalVals.forEach(v => {
+        const b = Math.max(0, Math.min(Math.floor((v - minV) / binW), bins - 1));
+        counts[b]++;  // tails are clamped into the first and last bins
+      });
+      const binLabels = counts.map((_, i) => fmt(minV + i * binW));
+      const barColors = counts.map((_, i) => {
+        const mid = minV + (i + 0.5) * binW;
+        return mid < initInv ? '#888' : '#000';
+      });
+
+      histChart = new Chart(document.getElementById('histChart'), {
+        type: 'bar',
+        data: {
+          labels: binLabels,
+          datasets: [{ data: counts, backgroundColor: barColors, borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: false },
+            y: { grid: { color: '#e8e8e8' }, ticks: { font: { family: 'Space Mono', size: 10 } } }
+          }
+        }
+      });
+
+      // Percentile table
+      const percs = [5, 25, 50, 75, 95];
+      const percVals = percs.map(p => percentileSorted(finalVals, p));
+      document.getElementById('percTable').innerHTML = `
+        <table class="percentile-table">
+          <thead><tr><th>Percentile</th><th>Final Value</th><th>Return</th></tr></thead>
+          <tbody>
+            ${percs.map((p, i) => `
+              <tr>
+                <td>${p}th</td>
+                <td>${fmt(percVals[i])}</td>
+                <td>${((percVals[i] - initInv) / initInv * 100).toFixed(1)}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Risk bars
+      const maxVal = best * 1.05;
+      const riskItems = [
+        { label: 'Initial', val: initInv },
+        { label: 'Benchmark', val: benchmark },
+        { label: 'P5 (Worst)', val: worst },
+        { label: 'Mean', val: expected },
+        { label: 'P95 (Best)', val: best },
+      ];
+      document.getElementById('riskBars').innerHTML = riskItems.map(item => `
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:9px">${item.label}</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${Math.max(2, (item.val / maxVal) * 100)}%"></div>
+          </div>
+          <span class="bar-val">${fmt(item.val)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('status-left').textContent = `SIMULATION COMPLETE — ${nSims.toLocaleString()} RUNS`;
+    }, 50);
+  }
+</script>
+</body>
+</html>

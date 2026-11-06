@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPO_EV_LEASING</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --border: 2px solid #000000;
+            --font-sans: 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-sans);
+            text-transform: uppercase;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            border-bottom: var(--border);
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-weight: bold;
+            background: var(--fg);
+            color: var(--bg);
+            display: flex;
+            align-items: center;
+        }
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        @media (max-width: 768px) {
+            .dashboard-container { grid-template-columns: 1fr; overflow-y: auto; }
+            body { height: auto; overflow: auto; }
+        }
+        .controls-panel {
+            border-right: var(--border);
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+            overflow-y: auto;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 0.6rem; }
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--fg);
+            padding-bottom: 0.4rem;
+        }
+        .section-divider {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            opacity: 0.4;
+            border-top: 1px dashed var(--fg);
+            padding-top: 0.6rem;
+        }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 14px;
+            background: var(--fg);
+            cursor: ew-resize;
+            margin-top: -13px;
+            border: 1px solid var(--bg);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 3px;
+            cursor: pointer;
+            background: var(--fg);
+        }
+        .output-panel {
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+        .output-label {
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+        .output-value {
+            font-size: 11vw;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.05em;
+        }
+        .output-sub {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+        .output-sub:first-of-type { margin-top: 1.2rem; }
+        @media (max-width: 768px) {
+            .output-value { font-size: 25vw; }
+            .controls-panel { border-right: none; border-bottom: var(--border); }
+        }
+        .terminal-log {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-top: var(--border);
+            padding: 1.2rem 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-align: left;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            background: #f4f4f4;
+        }
+        .status-warning {
+            color: var(--bg);
+            background: var(--fg);
+            padding: 0.2rem 0.5rem;
+            display: inline-block;
+        }
+        .status-marginal {
+            color: var(--fg);
+            background: transparent;
+            border: 1px solid var(--fg);
+            padding: 0.2rem 0.5rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>TPO_EV_LEASING</span>
+    </header>
+
+    <div class="dashboard-container">
+
+        <!-- LEFT: INPUTS -->
+        <div class="controls-panel">
+
+            <div class="section-divider">// FLEET CONFIGURATION</div>
+
+            <div class="control-group">
+                <div class="control-header"><label for="fleet-size">FLEET SIZE (VEHICLES)</label><span id="val-fleet-size"></span></div>
+                <input type="range" id="fleet-size" min="1" max="200" step="1" value="20">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="cost-vehicle">COST PER VEHICLE ($)</label><span id="val-cost-vehicle"></span></div>
+                <input type="range" id="cost-vehicle" min="20000" max="80000" step="500" value="42000">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="ev-incentive">EV PURCHASE INCENTIVE ($/VEHICLE)</label><span id="val-ev-incentive"></span></div>
+                <!-- Reduces cash outlay and the depreciable tax basis -->
+                <input type="range" id="ev-incentive" min="0" max="10000" step="250" value="7500">
+            </div>
+
+            <div class="section-divider">// LEASE TERMS</div>
+
+            <div class="control-group">
+                <div class="control-header"><label for="lease-term">LEASE TERM (MONTHS)</label><span id="val-lease-term"></span></div>
+                <input type="range" id="lease-term" min="24" max="48" step="12" value="36">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="lease-payment">MONTHLY LEASE PAYMENT, NEW VEHICLE ($)</label><span id="val-lease-payment"></span></div>
+                <!-- Re-leases of older vehicles scale down with vehicle value -->
+                <input type="range" id="lease-payment" min="300" max="1500" step="10" value="1000">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="utilisation">FLEET UTILISATION RATE (%)</label><span id="val-utilisation"></span></div>
+                <input type="range" id="utilisation" min="50" max="100" step="1" value="90">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="escalator">IN-LEASE ESCALATOR (%/YR)</label><span id="val-escalator"></span></div>
+                <!-- Step-up within a lease; resets at each new lease cycle -->
+                <input type="range" id="escalator" min="0.0" max="5.0" step="0.1" value="1.5">
+            </div>
+
+            <div class="section-divider">// FINANCING & TAX</div>
+
+            <div class="control-group">
+                <div class="control-header"><label for="ltv">DEBT SHARE OF NET CAPEX (%)</label><span id="val-ltv"></span></div>
+                <!-- Debt amortises monthly over the first lease term; 0 = all equity -->
+                <input type="range" id="ltv" min="0" max="90" step="5" value="70">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="interest-rate">COST OF DEBT (%)</label><span id="val-interest-rate"></span></div>
+                <input type="range" id="interest-rate" min="2.0" max="12.0" step="0.1" value="6.5">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="hurdle-rate">EQUITY HURDLE RATE FOR NPV (%)</label><span id="val-hurdle-rate"></span></div>
+                <input type="range" id="hurdle-rate" min="4.0" max="20.0" step="0.5" value="10.0">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="tax-rate">CORPORATE TAX RATE (%)</label><span id="val-tax-rate"></span></div>
+                <!-- MACRS 5-year depreciation; tax losses assumed absorbed by sponsor -->
+                <input type="range" id="tax-rate" min="0" max="40" step="1" value="21">
+            </div>
+
+            <div class="section-divider">// COST & RISK</div>
+
+            <div class="control-group">
+                <div class="control-header"><label for="om-cost">MAINTENANCE + INSURANCE ($/VEHICLE/YR)</label><span id="val-om-cost"></span></div>
+                <input type="range" id="om-cost" min="500" max="5000" step="100" value="1800">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="om-inflation">O&amp;M INFLATION (%/YR)</label><span id="val-om-inflation"></span></div>
+                <input type="range" id="om-inflation" min="0.0" max="10.0" step="0.1" value="2.5">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="depreciation">ANNUAL VALUE DEGRADATION (%)</label><span id="val-depreciation"></span></div>
+                <!-- Drives terminal value AND re-lease payment decay -->
+                <input type="range" id="depreciation" min="5" max="30" step="1" value="15">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="default-rate">LESSEE DEFAULT RATE (%)</label><span id="val-default-rate"></span></div>
+                <input type="range" id="default-rate" min="0.0" max="10.0" step="0.1" value="3.0">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><label for="remarketing-cost">REMARKETING COST ($/VEHICLE/CYCLE)</label><span id="val-remarketing-cost"></span></div>
+                <input type="range" id="remarketing-cost" min="0" max="3000" step="50" value="800">
+            </div>
+
+        </div>
+
+        <!-- RIGHT: OUTPUT -->
+        <div class="output-panel">
+            <div class="output-label">EQUITY I.R.R. (AFTER TAX)</div>
+            <div class="output-value" id="irr-output">--.-%</div>
+            <div class="output-sub" id="unlev-output">UNLEVERED IRR: --.-%</div>
+            <div class="output-sub" id="npv-output">NPV @ HURDLE: $---,---</div>
+
+            <div class="terminal-log">
+                <div>
+                    <div>> CALC_STATUS: <span id="sys-status">NOMINAL</span></div>
+                    <div id="payback-period">> EST_BREAKEVEN: --.- YRS</div>
+                    <div id="total-capex">> TOTAL_CAPEX: $---,---</div>
+                </div>
+                <div>
+                    <div id="holding-period">> HOLDING_PERIOD: -- YRS</div>
+                    <div id="cycles-output">> LEASE_CYCLES: --</div>
+                    <div id="equity-output">> EQUITY_INVESTED: $---,---</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ENGINE_START
+        const MACRS_5YR = [0.20, 0.32, 0.192, 0.1152, 0.1152, 0.0576]; // half-year convention
+
+        // Builds monthly after-tax cash flows. ltv = debt share of net capex (0 = unlevered).
+        function buildCashFlows(p, ltv) {
+            const termM  = p.leaseTerm;
+            const termY  = termM / 12;
+            const cycles = Math.ceil(10 / termY);      // whole lease cycles, at least 10 yrs
+            const H      = cycles * termY;             // holding period (years)
+            const N      = H * 12;                     // months
+
+            const gross    = p.fleet * p.cost;
+            const netCapex = gross - p.fleet * p.incentive;   // incentive received at t0
+            const taxBasis = netCapex;                         // credit reduces depreciable basis
+            const debt     = netCapex * ltv;
+            const equity   = netCapex - debt;
+
+            const rm  = p.debtRate / 12;
+            const pmt = debt > 0
+                ? (rm > 0 ? debt * rm / (1 - Math.pow(1 + rm, -termM)) : debt / termM)
+                : 0;
+
+            const cf = new Array(N + 1).fill(0);
+            cf[0] = -equity;
+            let bal = debt;
+
+            let yRev = 0, yOm = 0, yInt = 0, yRem = 0, yGain = 0;
+
+            for (let m = 1; m <= N; m++) {
+                const y          = Math.ceil(m / 12);                          // 1-based year
+                const cycleIdx   = Math.floor((m - 1) / termM);                // 0-based cycle
+                const yrInCycle  = Math.floor(((m - 1) - cycleIdx * termM) / 12);
+                const vehicleAge = cycleIdx * termY;                           // age at cycle start
+
+                // Re-lease rate scales with vehicle value; escalator steps within a lease
+                const payment = p.payment * Math.pow(1 - p.deprec, vehicleAge) * Math.pow(1 + p.escalator, yrInCycle);
+                const rev = p.fleet * payment * p.util * (1 - p.defaultRate);
+                const om  = p.fleet * (p.om / 12) * Math.pow(1 + p.omInfl, y - 1);
+
+                let interest = 0, service = 0;
+                if (m <= termM && debt > 0) {
+                    interest = bal * rm;
+                    bal -= (pmt - interest);
+                    service = pmt;
+                }
+
+                const remark = (m % termM === 0) ? p.fleet * p.remarketing : 0;
+                const terminal = (m === N) ? p.fleet * p.cost * Math.pow(1 - p.deprec, H) : 0;
+
+                cf[m] = rev - om - service - remark + terminal;
+
+                yRev += rev; yOm += om; yInt += interest; yRem += remark;
+                if (m === N) yGain = terminal; // fully depreciated for tax by then, so proceeds are all gain
+
+                if (m % 12 === 0) {
+                    const dep     = y <= MACRS_5YR.length ? taxBasis * MACRS_5YR[y - 1] : 0;
+                    const taxable = yRev - yOm - yInt - yRem - dep + yGain;
+                    cf[m] -= taxable * p.taxRate;      // negative taxable income = tax shield
+                    yRev = yOm = yInt = yRem = yGain = 0;
+                }
+            }
+            return { cf, N, H, cycles, gross, netCapex, equity };
+        }
+
+        // NPV with annual rate applied monthly (effective-annual convention)
+        function npvAt(cf, annualRate) {
+            const f = 1 / Math.pow(1 + annualRate, 1 / 12);
+            let d = 1, s = 0;
+            for (let t = 0; t < cf.length; t++) { s += cf[t] * d; d *= f; }
+            return s;
+        }
+
+        // Grid scan for the first sign change, then bisection. Robust to sign flips in cash flows.
+        function solveIRR(cf) {
+            const STEP = 0.005, START = -0.9, END = 5.0;
+            let prevR = START, prev = npvAt(cf, prevR);
+            if (prev === 0) return prevR;
+            for (let i = 1; START + i * STEP <= END; i++) {
+                const r = START + i * STEP;
+                const cur = npvAt(cf, r);
+                if (cur === 0) return r;
+                if (prev * cur < 0) {
+                    let lo = prevR, hi = r;
+                    for (let k = 0; k < 60; k++) {
+                        const mid = (lo + hi) / 2;
+                        if (npvAt(cf, lo) * npvAt(cf, mid) <= 0) hi = mid; else lo = mid;
+                    }
+                    return (lo + hi) / 2;
+                }
+                prevR = r; prev = cur;
+            }
+            return NaN;
+        }
+
+        function paybackYears(cf) {
+            let cum = cf[0];
+            for (let m = 1; m < cf.length; m++) {
+                const prev = cum;
+                cum += cf[m];
+                if (cum >= 0) return (m - 1 + (-prev / cf[m])) / 12;
+            }
+            return null;
+        }
+
+        function runModel(p) {
+            const lev   = buildCashFlows(p, p.ltv);
+            const unlev = buildCashFlows(p, 0);
+            return {
+                lev, unlev,
+                irr:       solveIRR(lev.cf),
+                irrUnlev:  solveIRR(unlev.cf),
+                npv:       npvAt(lev.cf, p.hurdle),
+                breakeven: paybackYears(lev.cf)
+            };
+        }
+        // ENGINE_END
+
+        // ─── UI ───────────────────────────────────────────────────────────
+        const ids = ['fleet-size','cost-vehicle','ev-incentive','lease-term','lease-payment',
+                     'utilisation','escalator','ltv','interest-rate','hurdle-rate','tax-rate',
+                     'om-cost','om-inflation','depreciation','default-rate','remarketing-cost'];
+        const inputs = {}, vals = {};
+        ids.forEach(id => {
+            inputs[id] = document.getElementById(id);
+            vals[id]   = document.getElementById('val-' + id);
+        });
+
+        const irrOutput     = document.getElementById('irr-output');
+        const unlevOutput   = document.getElementById('unlev-output');
+        const npvOutput     = document.getElementById('npv-output');
+        const paybackPeriod = document.getElementById('payback-period');
+        const sysStatus     = document.getElementById('sys-status');
+        const totalCapex    = document.getElementById('total-capex');
+        const holdingPeriod = document.getElementById('holding-period');
+        const cyclesOutput  = document.getElementById('cycles-output');
+        const equityOutput  = document.getElementById('equity-output');
+
+        const money = n => (n < 0 ? '-$' : '$') + Math.round(Math.abs(n)).toLocaleString();
+        const pct   = x => (isNaN(x) || !isFinite(x)) ? 'N/A' : (x * 100).toFixed(1) + '%';
+
+        function calculateMetrics() {
+            const v = id => parseFloat(inputs[id].value);
+            const p = {
+                fleet: v('fleet-size'), cost: v('cost-vehicle'), incentive: v('ev-incentive'),
+                leaseTerm: v('lease-term'), payment: v('lease-payment'),
+                util: v('utilisation') / 100, escalator: v('escalator') / 100,
+                ltv: v('ltv') / 100, debtRate: v('interest-rate') / 100,
+                hurdle: v('hurdle-rate') / 100, taxRate: v('tax-rate') / 100,
+                om: v('om-cost'), omInfl: v('om-inflation') / 100,
+                deprec: v('depreciation') / 100, defaultRate: v('default-rate') / 100,
+                remarketing: v('remarketing-cost')
+            };
+
+            vals['fleet-size'].innerText       = p.fleet.toLocaleString();
+            vals['cost-vehicle'].innerText     = p.cost.toLocaleString();
+            vals['ev-incentive'].innerText     = p.incentive.toLocaleString();
+            vals['lease-term'].innerText       = p.leaseTerm;
+            vals['lease-payment'].innerText    = p.payment.toLocaleString();
+            vals['utilisation'].innerText      = (p.util * 100).toFixed(0);
+            vals['escalator'].innerText        = (p.escalator * 100).toFixed(1);
+            vals['ltv'].innerText              = (p.ltv * 100).toFixed(0);
+            vals['interest-rate'].innerText    = (p.debtRate * 100).toFixed(1);
+            vals['hurdle-rate'].innerText      = (p.hurdle * 100).toFixed(1);
+            vals['tax-rate'].innerText         = (p.taxRate * 100).toFixed(0);
+            vals['om-cost'].innerText          = p.om.toLocaleString();
+            vals['om-inflation'].innerText     = (p.omInfl * 100).toFixed(1);
+            vals['depreciation'].innerText     = (p.deprec * 100).toFixed(0);
+            vals['default-rate'].innerText     = (p.defaultRate * 100).toFixed(1);
+            vals['remarketing-cost'].innerText = p.remarketing.toLocaleString();
+
+            const r = runModel(p);
+            const irrPct = r.irr * 100;
+
+            irrOutput.innerText   = pct(r.irr);
+            unlevOutput.innerText = `UNLEVERED IRR: ${pct(r.irrUnlev)}`;
+            npvOutput.innerText   = `NPV @ HURDLE: ${money(r.npv)}`;
+
+            paybackPeriod.innerText = r.breakeven !== null
+                ? `> EST_BREAKEVEN: ${r.breakeven.toFixed(1)} YRS`
+                : `> EST_BREAKEVEN: >${r.lev.H} YRS`;
+            totalCapex.innerText    = `> TOTAL_CAPEX: ${money(r.lev.gross)}`;
+            holdingPeriod.innerText = `> HOLDING_PERIOD: ${r.lev.H} YRS`;
+            cyclesOutput.innerText  = `> LEASE_CYCLES: ${r.lev.cycles}`;
+            equityOutput.innerText  = `> EQUITY_INVESTED: ${money(r.lev.equity)}`;
+
+            if (isNaN(r.irr) || irrPct < 6.0) {
+                sysStatus.innerHTML = '<span class="status-warning">CRITICAL // UNINVESTABLE</span>';
+                irrOutput.style.color = '#fff';
+                irrOutput.style.backgroundColor = '#000';
+            } else if (irrPct < 9.0) {
+                sysStatus.innerHTML = '<span class="status-marginal">MARGINAL</span>';
+                irrOutput.style.color = '#000';
+                irrOutput.style.backgroundColor = 'transparent';
+            } else {
+                sysStatus.innerHTML = 'NOMINAL';
+                irrOutput.style.color = '#000';
+                irrOutput.style.backgroundColor = 'transparent';
+            }
+        }
+
+        ids.forEach(id => inputs[id].addEventListener('input', calculateMetrics));
+        calculateMetrics();
+    </script>
+</body>
+</html>
